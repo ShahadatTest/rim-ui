@@ -5,7 +5,7 @@ import { FORBIDDEN, graphqlErrorCode } from "../../../core/graphql/errors";
 import { queryKeys } from "../../../core/query/keys";
 import { toast } from "../../../shared/toast";
 import { hostOf, isDirectSpace } from "../../relay/state/useRelayStore";
-import { myServersQueryOptions, type Server } from "../api/useMyServers";
+import { fetchMyServers, type Server } from "../api/useMyServers";
 import { isDeparting, leaveWorkspace } from "../state/memberEvents";
 
 /** Query roots whose refusal with FORBIDDEN means the viewer may no longer be a member. */
@@ -30,7 +30,7 @@ export async function checkWorkspaceAccess(qc: QueryClient, workspaceId: string)
   checking.add(workspaceId);
   let servers: Server[];
   try {
-    servers = await qc.fetchQuery({ ...myServersQueryOptions(), staleTime: 0 });
+    servers = await fetchMyServers();
   } catch {
     return;
   } finally {
@@ -38,6 +38,11 @@ export async function checkWorkspaceAccess(qc: QueryClient, workspaceId: string)
   }
 
   if (servers.some((server) => server.id === workspaceId) || isDeparting(workspaceId)) return;
+  // A removal notice that arrived during the request already dropped it and said so.
+  const stillCached = qc
+    .getQueryData<Server[]>(queryKeys.myServers())
+    ?.some((server) => server.id === workspaceId);
+  if (!stillCached) return;
   leaveWorkspace(qc, workspaceId);
   toast.info(
     name ? `You are no longer a member of ${name}` : "You are no longer a member of this workspace",

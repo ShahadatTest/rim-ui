@@ -102,6 +102,22 @@ describe("useWorkspaceAccessWatch", () => {
     expect(toast.info).toHaveBeenCalledTimes(1);
   });
 
+  it("leaves a workspace dropped during the check to its own notice", async () => {
+    const qc = setup();
+    requestMock.mockImplementation(async (document: unknown) => {
+      if (!String(document).includes("MyServers")) throw new Error("unexpected request");
+      // The removal notice drops the workspace while the request is out.
+      qc.setQueryData<Server[]>(queryKeys.myServers(), [ONE]);
+      return { myServers: [ONE] };
+    });
+
+    await refuse(qc, queryKeys.unreadCounts("ws-2"));
+
+    await waitFor(() => expect(myServersRequests()).toHaveLength(1));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(toast.info).not.toHaveBeenCalled();
+  });
+
   it("keeps a workspace the server still lists", async () => {
     answerMyServers([ONE, TWO]);
     const qc = setup();

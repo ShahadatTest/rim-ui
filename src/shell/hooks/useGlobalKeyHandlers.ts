@@ -4,6 +4,7 @@ import { toast } from "../../shared/toast";
 import { vimModeEnabled } from "../../features/commands/state/useKeybindProfileStore";
 import { isKeystrokeRecorder } from "../../features/commands/runtime/keybindEngine";
 import { takeTypedWhileSwitching } from "../../features/conversations/state/openDirect";
+import { hostDialogOpen } from "../../shared/ui/hostDialogs";
 
 /**
  * Global keyboard handlers:
@@ -11,6 +12,7 @@ import { takeTypedWhileSwitching } from "../../features/conversations/state/open
  * 2. Printable characters auto-focus the composer, unless the Vim layer is on: there, keys
  *    outside a text field are normal-mode commands and `i` enters insert mode. While a direct
  *    message opens they go to its composer instead, never to the one being left.
+ * Neither runs while a host dialog is open.
  */
 export function useGlobalKeyHandlers() {
   // ESC exits zen mode when active.
@@ -20,6 +22,7 @@ export function useGlobalKeyHandlers() {
   useEffect(() => {
     function handleZenEscape(e: KeyboardEvent) {
       if (isKeystrokeRecorder(e.target)) return;
+      if (hostDialogOpen()) return;
       if (e.key !== "Escape") return;
       if (!useShellStore.getState().zenMode) return;
       useShellStore.getState().toggleZenMode();
@@ -32,6 +35,7 @@ export function useGlobalKeyHandlers() {
   useEffect(() => {
     function handleGlobalKeyDown(e: KeyboardEvent) {
       if (isKeystrokeRecorder(e.target)) return;
+      if (hostDialogOpen()) return;
       // Skip if modifier keys (except Shift) are held
       if (e.ctrlKey || e.metaKey || e.altKey) return;
 

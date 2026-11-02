@@ -22,6 +22,12 @@ deployment runs the web client at `RIM_WEB_VERSION`, apart from the server's `RI
 
 ## [Unreleased]
 
+### Fixed
+
+- While a dialog is open, such as Kick or Confirm: Run pipe, Ctrl+K and the other shortcuts do
+  nothing, so no command runs behind it, and a confirmation that the command palette asks for
+  closes the palette.
+
 ## [0.0.9] - 2026-10-31
 
 ### Added

@@ -153,6 +153,7 @@ import { useShellStore } from "../../../shell/state/useShellStore";
 import { useWorkspaceStore } from "../../workspaces/state/useWorkspaceStore";
 import { useRelayStore, type RelayInfo } from "../../relay/state/useRelayStore";
 import { queryClient } from "../../../core/query/queryClient";
+import { trackOpenDialog } from "../../../shared/ui/hostDialogs";
 
 function Providers({ children }: { children: ReactNode }) {
   return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
@@ -313,5 +314,21 @@ describe("the command palette's target picker", () => {
 
     expect(screen.getByRole("textbox", { name: "Join channel" })).toBeTruthy();
     expect(screen.getByRole("option", { name: "#random" })).toBeTruthy();
+  });
+
+  it("closes when a host dialog opens over it", () => {
+    useCommandStore.getState().openCommandPalette();
+    render(<CommandPalette />, { wrapper: Providers });
+    expect(screen.getByPlaceholderText("Type a command...")).toBeTruthy();
+    let release = () => {};
+    try {
+      act(() => {
+        release = trackOpenDialog();
+      });
+      expect(useCommandStore.getState().isCommandPaletteOpen).toBe(false);
+      expect(screen.queryByPlaceholderText("Type a command...")).toBeNull();
+    } finally {
+      release();
+    }
   });
 });

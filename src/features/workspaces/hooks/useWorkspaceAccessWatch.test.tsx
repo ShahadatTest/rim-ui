@@ -5,7 +5,8 @@ import type { ReactNode } from "react";
 
 import { queryKeys } from "../../../core/query/keys";
 import { useWorkspaceStore } from "../state/useWorkspaceStore";
-import type { Server } from "../api/useMyServers";
+import { myServersQueryOptions, type Server } from "../api/useMyServers";
+import { expectDeparture, forgetDeparture } from "../state/memberEvents";
 
 const requestMock = vi.hoisted(() => vi.fn());
 vi.mock("../../../core/graphql/client", () => ({
@@ -102,7 +103,7 @@ describe("useWorkspaceAccessWatch", () => {
     expect(toast.info).toHaveBeenCalledTimes(1);
   });
 
-  it("leaves a workspace dropped during the check to its own notice", async () => {
+  it("leaves a workspace dropped during the request to its own notice", async () => {
     const qc = setup();
     requestMock.mockImplementation(async (document: unknown) => {
       if (!String(document).includes("MyServers")) throw new Error("unexpected request");
@@ -159,5 +160,45 @@ describe("useWorkspaceAccessWatch", () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect(myServersRequests()).toHaveLength(1);
     expect(toast.info).toHaveBeenCalledTimes(1);
+  });
+
+  it("says so when any refetch of the list drops a workspace", async () => {
+    answerMyServers([ONE]);
+    useWorkspaceStore.setState({ workspaceId: "ws-2" });
+    const qc = setup();
+
+    await qc.fetchQuery({ ...myServersQueryOptions(), staleTime: 0 });
+
+    await waitFor(() =>
+      expect(toast.info).toHaveBeenCalledWith(
+        "You are no longer a member of Two",
+        expect.objectContaining({ id: "workspace-access-ws-2" }),
+      ),
+    );
+    expect(useWorkspaceStore.getState().workspaceId).toBeNull();
+  });
+
+  it("stays quiet about a workspace this client is leaving", async () => {
+    answerMyServers([ONE]);
+    const qc = setup();
+    expectDeparture("ws-2");
+    try {
+      await qc.fetchQuery({ ...myServersQueryOptions(), staleTime: 0 });
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(toast.info).not.toHaveBeenCalled();
+    } finally {
+      forgetDeparture("ws-2");
+    }
+  });
+
+  it("stays quiet about the first list after the cache is cleared", async () => {
+    answerMyServers([ONE]);
+    const qc = setup();
+    qc.clear();
+
+    await qc.fetchQuery({ ...myServersQueryOptions(), staleTime: 0 });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(toast.info).not.toHaveBeenCalled();
   });
 });

@@ -195,7 +195,8 @@ One context menu is open at a time: opening another closes the first. The arrows
 the items, skipping section headings; ArrowRight or Enter opens a submenu and ArrowLeft or
 Escape closes it again; Escape closes the menu and returns the focus where it was. Choosing an
 action closes the whole menu. Items can show a check mark for the current choice of a group and
-a muted keybind hint at the right.
+a muted keybind hint at the right. Opening a context menu closes a person's hover card, and no
+hover card opens while a menu is open.
 
 The menu belongs to the innermost target: a right click on a link, an image or a file inside a
 message opens that link's or attachment's menu, and anywhere else on the message the message's

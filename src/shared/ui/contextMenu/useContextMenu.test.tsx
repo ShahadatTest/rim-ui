@@ -3,7 +3,12 @@ import { act, fireEvent, render, screen } from "@testing-library/react";
 
 import type { DropdownMenuItem } from "../DropdownMenu";
 import { Z } from "../zIndex";
-import { LONG_PRESS_MS, useContextMenu } from "./useContextMenu";
+import {
+  LONG_PRESS_MS,
+  contextMenuOpen,
+  subscribeContextMenus,
+  useContextMenu,
+} from "./useContextMenu";
 
 function Row({ name, getItems }: { name: string; getItems: () => DropdownMenuItem[] }) {
   const contextMenu = useContextMenu();
@@ -44,6 +49,21 @@ afterEach(() => {
 });
 
 describe("useContextMenu", () => {
+  it("tells its subscribers when a menu opens and closes", () => {
+    const listener = vi.fn();
+    const stop = subscribeContextMenus(listener);
+    render(<Row name="general" getItems={() => itemsNamed("Mark read")} />);
+    expect(contextMenuOpen()).toBe(false);
+
+    rightClick(screen.getByTestId("general"));
+    expect(listener).toHaveBeenCalled();
+    expect(contextMenuOpen()).toBe(true);
+
+    fireEvent.keyDown(screen.getByRole("menu"), { key: "Escape" });
+    expect(contextMenuOpen()).toBe(false);
+    stop();
+  });
+
   it("opens at the pointer on a right click and cancels the browser's menu", () => {
     render(<Row name="general" getItems={() => itemsNamed("Mark read")} />);
     const event = rightClick(screen.getByTestId("general"), 40, 50);

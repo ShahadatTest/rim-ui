@@ -4,11 +4,16 @@ import { gql } from "graphql-request";
 import { graphqlClient } from "../../../core/graphql/client";
 import { logger } from "../../../core/logger";
 import { queryKeys } from "../../../core/query/keys";
-import type { ConversationTypeEnum } from "../../../core/graphql/generated/schema-types";
+import { ConversationTypeEnum } from "../../../core/graphql/generated/schema-types";
 import { useAuthStore } from "../../auth/state/useAuthStore";
 import { findCachedConversation } from "../../conversations/api/useConversation";
 import { plainMessagePreview } from "../../messages/utils/snippetText";
-import { memberName, mentionedMemberName } from "../../workspaces/api/memberName";
+import { mentionedMemberName } from "../../workspaces/api/memberName";
+import { fetchServerMembers, type ServerMember } from "../../workspaces/api/useServerMembers";
+import { buildMemberLookup } from "../../workspaces/hooks/useMemberLookup";
+import { useKnownHandles } from "../../workspaces/state/useKnownHandles";
+import { useContactStore } from "../../relay/contacts/useContactStore";
+import { isDirectSpace } from "../../relay/state/useRelayStore";
 import { ENCRYPTED_MESSAGE_TEXT, storedTextSoon } from "../api/storedText";
 import {
   authorDisplayName,
@@ -149,7 +154,31 @@ export async function resolveNotificationContent(
     }
   }
 
-  const resolveName = (userId: string) => memberName(qc, workspaceId, userId) ?? "Someone";
+  // The member list is needed only when a name is: an untitled non-channel conversation, or an
+  // author the message does not carry.
+  const namesMembers =
+    (conversation !== undefined &&
+      conversation.conversationType !== ConversationTypeEnum.CHANNEL &&
+      !conversation.title) ||
+    (!message?.author && Boolean(message?.authorId));
+  const membersKey = queryKeys.serverMembers(workspaceId);
+  const members: ServerMember[] | undefined = namesMembers
+    ? await qc
+        .ensureQueryData({
+          queryKey: membersKey,
+          queryFn: () => fetchServerMembers(workspaceId),
+          staleTime: 60_000,
+        })
+        .catch(() => undefined)
+    : qc.getQueryData<ServerMember[]>(membersKey);
+  const lookup = buildMemberLookup({
+    me: qc.getQueryData(queryKeys.me),
+    members,
+    aliases: useContactStore.getState().aliases,
+    handles: useKnownHandles.getState().byUser,
+    inDirectSpace: isDirectSpace(workspaceId),
+  });
+  const resolveName = (userId: string) => lookup.resolve(userId).displayName || "Someone";
   const currentUserId = useAuthStore.getState().session?.userId;
   const authorName =
     authorDisplayName(message?.author) ??

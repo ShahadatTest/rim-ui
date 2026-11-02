@@ -7,6 +7,14 @@ vi.mock("./ProfileSettings", () => ({
   ProfileSettings: () => <div data-testid="profile-settings">Profile Panel</div>,
 }));
 
+vi.mock("../../relay/components/ContactsSettings", () => ({
+  ContactsSettings: () => {
+    throw new TypeError(
+      "Failed to fetch dynamically imported module: https://rim.test/assets/ContactsSettings-x.js",
+    );
+  },
+}));
+
 vi.mock("./AccountSettings", () => ({
   AccountSettings: ({ onNavigateToProfile }: { onNavigateToProfile: () => void }) => (
     <div data-testid="account-settings">
@@ -555,6 +563,18 @@ describe("SettingsPage", () => {
       expect(screen.queryByRole("button", { name })).not.toBeInTheDocument();
     }
     expect(screen.getByRole("button", { name: "Keybinds" })).toBeInTheDocument();
+    expect(screen.getByTestId("profile-settings")).toBeInTheDocument();
+  });
+
+  it("keeps a section that could not load inside the section", async () => {
+    const user = userEvent.setup();
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    renderSettings();
+    await user.click(screen.getByRole("button", { name: "Contacts" }));
+    expect(await screen.findByText("This part of the app could not load")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Reload" })).toBeInTheDocument();
+    expect(screen.getByRole("navigation", { name: "Settings sections" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Profile" }));
     expect(screen.getByTestId("profile-settings")).toBeInTheDocument();
   });
 });

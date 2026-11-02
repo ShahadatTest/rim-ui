@@ -58,6 +58,7 @@ import { sendNotification } from "@tauri-apps/plugin-notification";
 import { toast } from "../../../shared/toast";
 import { useWorkspaceEvents } from "../../../core/events/useWorkspaceEvents";
 import { useAuthStore } from "../../auth/state/useAuthStore";
+import { useContactStore } from "../../relay/contacts/useContactStore";
 import { useShellStore } from "../../../shell/state/useShellStore";
 import { makeConversation } from "../../conversations/__fixtures__/conversations";
 import { useNotificationSettingsStore } from "../state/useNotificationSettingsStore";
@@ -413,6 +414,89 @@ describe("NotificationDue rendering", () => {
         sound: "Ping",
       }),
     );
+  });
+
+  describe("an untitled group whose space's member list is not cached", () => {
+    function seedGroup() {
+      const group = makeConversation({
+        id: "c-group",
+        title: null,
+        conversationType: ConversationTypeEnum.GROUP,
+        memberIds: ["me", "u-alice", "u-carol"],
+      });
+      const qc = setup();
+      qc.setQueryData(queryKeys.conversations("ws-1"), {
+        items: [group],
+        pageInfo: { hasNext: false, hasPrev: false },
+      });
+      qc.setQueryData(queryKeys.messages("ws-1", "c-group"), {
+        pageParams: [null],
+        pages: [
+          {
+            items: [
+              {
+                id: "m-5",
+                authorId: "u-alice",
+                author: { id: "u-alice", username: "alice", displayName: "Alice" },
+                text: "hello group",
+              },
+            ],
+          },
+        ],
+      });
+      return qc;
+    }
+
+    function answerMembers() {
+      requestMock.mockImplementation((document: unknown) =>
+        String(document).includes("query ServerMembers")
+          ? Promise.resolve({
+              serverMembers: [
+                { userId: "u-alice", username: "alice", displayName: "Alice" },
+                {
+                  userId: "u-carol",
+                  username: "carol",
+                  displayName: "Carol",
+                  principalId: "p-carol",
+                },
+              ],
+            })
+          : new Promise(() => {}),
+      );
+    }
+
+    afterEach(() => {
+      useContactStore.setState({ aliases: {} });
+    });
+
+    it("names an untitled group after its members", async () => {
+      answerMembers();
+      seedGroup();
+      emit(notificationDue({ conversation_id: "c-group", message_id: "m-5", reason: "direct" }));
+
+      await waitFor(() =>
+        expect(sendNotification).toHaveBeenCalledWith({
+          title: "Alice and Carol",
+          body: "Alice: hello group",
+          sound: "Ping",
+        }),
+      );
+    });
+
+    it("names group members by the alias the sidebar shows", async () => {
+      answerMembers();
+      useContactStore.setState({ aliases: { "p-carol": "Caz" } });
+      seedGroup();
+      emit(notificationDue({ conversation_id: "c-group", message_id: "m-5", reason: "direct" }));
+
+      await waitFor(() =>
+        expect(sendNotification).toHaveBeenCalledWith({
+          title: "Alice and Caz",
+          body: "Alice: hello group",
+          sound: "Ping",
+        }),
+      );
+    });
   });
 
   it("shows the preview as plain text with mentions named", async () => {

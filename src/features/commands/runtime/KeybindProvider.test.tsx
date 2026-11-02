@@ -85,6 +85,7 @@ import { useCommands } from "../api/useCommands";
 import { toast } from "../../../shared/toast";
 import { useShellStore } from "../../../shell/state/useShellStore";
 import { useMemberDirectoryStore } from "../../workspaces/state/useMemberDirectoryStore";
+import { trackOpenDialog } from "../../../shared/ui/hostDialogs";
 
 const REFRESH = "plugin.chat.rim.k8s-pods.refresh";
 
@@ -375,6 +376,30 @@ describe("KeybindProvider with the default profile", () => {
 
     expect(press(field, "k", { ctrlKey: true }).defaultPrevented).toBe(false);
     expect(dispatchCommand).not.toHaveBeenCalled();
+  });
+
+  it("runs no keybind, Ctrl+K included, while a host dialog is open", () => {
+    renderWith(<button>x</button>);
+    const release = trackOpenDialog();
+    try {
+      press(document.body, "k", { ctrlKey: true });
+      press(document.body, "?", { shiftKey: true });
+      expect(dispatched()).toEqual([]);
+    } finally {
+      release();
+    }
+    press(document.body, "k", { ctrlKey: true });
+    expect(dispatched()).toEqual(["workspace.open_command_palette"]);
+  });
+
+  it("leaves a key pressed in a host dialog to the dialog", () => {
+    renderWith(<button>x</button>);
+    const release = trackOpenDialog();
+    try {
+      expect(press(document.body, "k", { ctrlKey: true }).defaultPrevented).toBe(false);
+    } finally {
+      release();
+    }
   });
 
   it("leaves Escape to a composer whose suggestion list is open", () => {

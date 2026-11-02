@@ -44,6 +44,7 @@ import { queryClient } from "../../../core/query/queryClient";
 import { LOCAL_COMMANDS, withClientLabel } from "../runtime/localCommands";
 import { createPaletteSearch } from "../runtime/paletteSearch";
 import { cn } from "../../../shared/ui/cn";
+import { useHostDialogOpen } from "../../../shared/ui/hostDialogs";
 import { PipelineResultView } from "./PipelineResultView";
 import { PaletteTargetPicker, type PickerTarget } from "./PaletteTargetPicker";
 import { CommandResultView } from "./CommandResultView";
@@ -241,6 +242,13 @@ function CommandPaletteDialog() {
   useEffect(() => {
     if (isOpen && !targetPicker) requestAnimationFrame(() => inputRef.current?.focus());
   }, [isOpen, targetPicker]);
+
+  const dialogOpen = useHostDialogOpen();
+  // A dialog that opens over the palette, a command's confirmation included, takes over: the
+  // palette closes.
+  useEffect(() => {
+    if (isOpen && dialogOpen) closeCommandPalette();
+  }, [isOpen, dialogOpen, closeCommandPalette]);
 
   // Scroll selected item into view
   useEffect(() => {

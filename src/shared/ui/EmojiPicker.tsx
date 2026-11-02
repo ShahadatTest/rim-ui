@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 
 import { lazyWithRetry } from "../lazy/importWithRetry";
 import { useServerMediaUrls } from "../media/serverMedia";
+import { SurfaceErrorBoundary } from "./SurfaceErrorBoundary";
 import { Z } from "./zIndex";
 
 /** Minimal custom emoji shape needed by the picker (avoids importing from features/emoji). */
@@ -136,23 +137,25 @@ export function EmojiPicker({ position, onSelect, onClose, customEmojis }: Emoji
       style={style}
       className="rounded-lg shadow-xl"
     >
-      <Suspense fallback={null}>
-        {/* emoji-mart builds its custom category once, so a new image re-creates the picker */}
-        <LazyPicker
-          key={custom?.[0].emojis.length ?? 0}
-          onEmojiSelect={handleEmojiSelect}
-          theme="dark"
-          custom={custom}
-          perLine={9}
-          emojiSize={22}
-          emojiButtonSize={32}
-          maxFrequentRows={2}
-          previewPosition="none"
-          skinTonePosition="search"
-          navPosition="top"
-          set="native"
-        />
-      </Suspense>
+      <SurfaceErrorBoundary surface="Emoji picker">
+        <Suspense fallback={null}>
+          {/* emoji-mart builds its custom category once, so a new image re-creates the picker */}
+          <LazyPicker
+            key={custom?.[0].emojis.length ?? 0}
+            onEmojiSelect={handleEmojiSelect}
+            theme="dark"
+            custom={custom}
+            perLine={9}
+            emojiSize={22}
+            emojiButtonSize={32}
+            maxFrequentRows={2}
+            previewPosition="none"
+            skinTonePosition="search"
+            navPosition="top"
+            set="native"
+          />
+        </Suspense>
+      </SurfaceErrorBoundary>
     </div>,
     document.body,
   );

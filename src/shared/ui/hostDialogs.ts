@@ -1,8 +1,9 @@
 import { useSyncExternalStore } from "react";
 
 /**
- * How many host dialogs are open. Plugin frames turn `inert` while one is, so a
- * plugin can neither click through nor draw focus away from a host dialog.
+ * How many host dialogs are open. While one is, plugin frames turn `inert`, so a plugin can
+ * neither click through nor draw focus away from it, and keybinds and typing to the composer
+ * wait.
  */
 let openDialogs = 0;
 const listeners = new Set<() => void>();
@@ -24,6 +25,7 @@ export function trackOpenDialog(): () => void {
   };
 }
 
+/** True while any host dialog is open. */
 export function hostDialogOpen(): boolean {
   return openDialogs > 0;
 }

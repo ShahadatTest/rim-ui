@@ -8,6 +8,7 @@ import {
   useConfirmationModalStore,
   type ConfirmationRequest,
 } from "../state/confirmationModalStore";
+import { hostDialogOpen } from "../../../shared/ui/hostDialogs";
 import { ConfirmCommandModal } from "./ConfirmCommandModal";
 
 function makeRequest(overrides: Partial<ConfirmationRequest> = {}): ConfirmationRequest {
@@ -50,6 +51,18 @@ describe("ConfirmCommandModal — render gate", () => {
     });
     expect(screen.getByRole("dialog")).toBeInTheDocument();
     expect(screen.getByTestId("rim-system-badge")).toBeInTheDocument();
+  });
+
+  it("counts as an open host dialog while it shows", () => {
+    render(<ConfirmCommandModal />);
+    act(() => {
+      void useConfirmationModalStore.getState().open(makeRequest());
+    });
+    expect(hostDialogOpen()).toBe(true);
+    act(() => {
+      useConfirmationModalStore.getState().reject();
+    });
+    expect(hostDialogOpen()).toBe(false);
   });
 });
 

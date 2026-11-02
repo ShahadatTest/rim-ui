@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Check, X, ChevronDown, ChevronRight } from "lucide-react";
+import { InlineCodeText } from "../../../shared/toast/inlineCode";
 import { cn } from "../../../shared/ui/cn";
 import type { PipeStageResult, CommandResultStatus } from "../types";
 
@@ -77,7 +78,7 @@ export function PipelineResultView({ stages }: PipelineResultViewProps) {
                 isError ? "text-rim-danger" : "text-rim-text-muted",
               )}
             >
-              {stage.message}
+              {isError ? <InlineCodeText text={stage.message} /> : stage.message}
             </div>
             <div className="pl-6">
               <StagePayload payload={stage.payload} />

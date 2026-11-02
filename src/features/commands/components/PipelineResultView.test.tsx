@@ -56,6 +56,40 @@ describe("PipelineResultView", () => {
     expect(successStage.className).not.toContain("rim-danger");
   });
 
+  it("renders backtick-quoted arg names as code on error stages", () => {
+    const stages: PipeStageResult[] = [
+      makeStage({
+        stageIndex: 0,
+        commandId: "admin.kick",
+        status: "ERROR",
+        message: "missing string arg `user_id`",
+      }),
+    ];
+
+    const { container } = render(<PipelineResultView stages={stages} />);
+    const code = container.querySelector("code");
+    expect(code).not.toBeNull();
+    expect(code?.textContent).toBe("user_id");
+    expect(screen.getByText("missing string arg", { exact: false }).textContent).toBe(
+      "missing string arg user_id",
+    );
+  });
+
+  it("keeps backticks as written on success stage messages", () => {
+    const stages: PipeStageResult[] = [
+      makeStage({
+        stageIndex: 0,
+        commandId: "cmd.ok",
+        status: "SUCCESS",
+        message: "wrote `notes.md`",
+      }),
+    ];
+
+    const { container } = render(<PipelineResultView stages={stages} />);
+    expect(container.querySelector("code")).toBeNull();
+    expect(screen.getByText("wrote `notes.md`")).toBeTruthy();
+  });
+
   it("renders a single stage", () => {
     const stages: PipeStageResult[] = [
       makeStage({ stageIndex: 0, commandId: "solo.cmd", message: "Solo result" }),

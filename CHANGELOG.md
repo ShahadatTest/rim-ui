@@ -24,6 +24,8 @@ deployment runs the web client at `RIM_WEB_VERSION`, apart from the server's `RI
 
 ### Fixed
 
+- Notifications of a group without a name are titled with its members' names, as in the sidebar,
+  instead of "Someone and Someone".
 - When part of the app cannot be downloaded (offline, or after the server's web app was updated),
   only the emoji picker or the Settings section that needed it says so, with Reload; the
   conversation, the composer and the list of Settings sections stay usable.

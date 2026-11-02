@@ -22,6 +22,11 @@ deployment runs the web client at `RIM_WEB_VERSION`, apart from the server's `RI
 
 ## [Unreleased]
 
+### Fixed
+
+- Notifications of a group without a name are titled with its members' names, as in the sidebar,
+  instead of "Someone and Someone".
+
 ## [0.0.9] - 2026-10-31
 
 ### Added

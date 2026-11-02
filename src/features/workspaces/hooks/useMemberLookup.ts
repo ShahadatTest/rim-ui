@@ -10,7 +10,7 @@ import {
 import { useIsDirectSpace } from "../../relay/state/useRelayStore";
 import { useContactStore } from "../../relay/contacts/useContactStore";
 import { useCurrentUser } from "../api/useCurrentUser";
-import { useServerMembers } from "../api/useServerMembers";
+import { useServerMembers, type ServerMember } from "../api/useServerMembers";
 import { useKnownHandles } from "../state/useKnownHandles";
 
 type MemberInfo = {
@@ -30,6 +30,112 @@ type MemberInfo = {
   joinedAt?: string;
 };
 
+type CurrentUser = NonNullable<ReturnType<typeof useCurrentUser>["data"]>;
+
+/** What a member lookup is built from. */
+export interface MemberLookupSources {
+  me: CurrentUser | undefined;
+  members: ServerMember[] | undefined;
+  aliases: Readonly<Record<string, string>>;
+  handles: Readonly<Record<string, string>>;
+  inDirectSpace: boolean;
+}
+
+/** People of a space by user id, named as the viewer sees them; see `useMemberLookup`. */
+export function buildMemberLookup({
+  me,
+  members,
+  aliases,
+  handles,
+  inDirectSpace,
+}: MemberLookupSources) {
+  const map = new Map<string, MemberInfo>();
+  /** The viewer's own handle domain: handles with it are shown as `@username`. */
+  const ownDomain = handleDomain(me?.handle);
+
+  if (me) {
+    map.set(me.id, {
+      displayName: me.displayName || me.username,
+      username: me.username,
+      handle: me.handle ?? handles[me.id] ?? null,
+      handleView: null,
+      isCurrentUser: true,
+      avatarUrl: me.avatarUrl,
+      statusText: me.statusText,
+      bio: me.bio,
+    });
+  }
+
+  if (members) {
+    for (const member of members) {
+      if (!map.has(member.userId)) {
+        map.set(member.userId, {
+          displayName: personName(
+            { ...member, handle: handles[member.userId] },
+            member.userId,
+            ownDomain,
+          ),
+          username: member.username,
+          handle: handles[member.userId] ?? null,
+          handleView: null,
+          role: member.memberRole,
+          timeoutUntil: member.timeoutUntil ?? null,
+          isCurrentUser: false,
+          avatarUrl: member.avatarUrl,
+          statusText: member.statusText,
+          bio: member.bio,
+          joinedAt: member.joinedAt,
+        });
+      } else {
+        const existing = map.get(member.userId)!;
+        existing.role = member.memberRole;
+        existing.timeoutUntil = member.timeoutUntil ?? null;
+        existing.joinedAt = member.joinedAt;
+        if (member.avatarUrl) {
+          existing.avatarUrl = member.avatarUrl;
+        }
+        if (member.statusText) {
+          existing.statusText = member.statusText;
+        }
+        if (member.bio) {
+          existing.bio = member.bio;
+        }
+        if (member.displayName) {
+          existing.displayName = member.displayName;
+        }
+        if (member.username) {
+          existing.username = member.username;
+        }
+      }
+    }
+  }
+
+  for (const member of members ?? []) {
+    const alias = member.principalId ? aliases[member.principalId] : undefined;
+    const info = map.get(member.userId);
+    if (alias && info && !info.isCurrentUser) info.displayName = alias;
+  }
+
+  for (const info of map.values()) {
+    info.handleView = viewHandle(info.username, info.handle, ownDomain);
+  }
+
+  function resolve(userId: string): MemberInfo {
+    const handle = handles[userId] ?? null;
+    return (
+      map.get(userId) ?? {
+        displayName: "",
+        isFormerMember: !inDirectSpace && members !== undefined,
+        handle,
+        handleView: viewHandle(null, handle, ownDomain),
+        isCurrentUser: false,
+      }
+    );
+  }
+
+  return { resolve, map, ownDomain };
+}
+
 export function useMemberLookup(serverId?: string) {
   const inDirectSpace = useIsDirectSpace(serverId);
   const { data: me } = useCurrentUser();
@@ -38,91 +144,8 @@ export function useMemberLookup(serverId?: string) {
   const aliases = useContactStore((s) => s.aliases);
   const handles = useKnownHandles((s) => s.byUser);
 
-  return useMemo(() => {
-    const map = new Map<string, MemberInfo>();
-    /** The viewer's own handle domain: handles with it are shown as `@username`. */
-    const ownDomain = handleDomain(me?.handle);
-
-    if (me) {
-      map.set(me.id, {
-        displayName: me.displayName || me.username,
-        username: me.username,
-        handle: me.handle ?? handles[me.id] ?? null,
-        handleView: null,
-        isCurrentUser: true,
-        avatarUrl: me.avatarUrl,
-        statusText: me.statusText,
-        bio: me.bio,
-      });
-    }
-
-    if (members) {
-      for (const member of members) {
-        if (!map.has(member.userId)) {
-          map.set(member.userId, {
-            displayName: personName(
-              { ...member, handle: handles[member.userId] },
-              member.userId,
-              ownDomain,
-            ),
-            username: member.username,
-            handle: handles[member.userId] ?? null,
-            handleView: null,
-            role: member.memberRole,
-            timeoutUntil: member.timeoutUntil ?? null,
-            isCurrentUser: false,
-            avatarUrl: member.avatarUrl,
-            statusText: member.statusText,
-            bio: member.bio,
-            joinedAt: member.joinedAt,
-          });
-        } else {
-          const existing = map.get(member.userId)!;
-          existing.role = member.memberRole;
-          existing.timeoutUntil = member.timeoutUntil ?? null;
-          existing.joinedAt = member.joinedAt;
-          if (member.avatarUrl) {
-            existing.avatarUrl = member.avatarUrl;
-          }
-          if (member.statusText) {
-            existing.statusText = member.statusText;
-          }
-          if (member.bio) {
-            existing.bio = member.bio;
-          }
-          if (member.displayName) {
-            existing.displayName = member.displayName;
-          }
-          if (member.username) {
-            existing.username = member.username;
-          }
-        }
-      }
-    }
-
-    for (const member of members ?? []) {
-      const alias = member.principalId ? aliases[member.principalId] : undefined;
-      const info = map.get(member.userId);
-      if (alias && info && !info.isCurrentUser) info.displayName = alias;
-    }
-
-    for (const info of map.values()) {
-      info.handleView = viewHandle(info.username, info.handle, ownDomain);
-    }
-
-    function resolve(userId: string): MemberInfo {
-      const handle = handles[userId] ?? null;
-      return (
-        map.get(userId) ?? {
-          displayName: "",
-          isFormerMember: !inDirectSpace && members !== undefined,
-          handle,
-          handleView: viewHandle(null, handle, ownDomain),
-          isCurrentUser: false,
-        }
-      );
-    }
-
-    return { resolve, map, ownDomain };
-  }, [me, members, aliases, handles, inDirectSpace]);
+  return useMemo(
+    () => buildMemberLookup({ me, members, aliases, handles, inDirectSpace }),
+    [me, members, aliases, handles, inDirectSpace],
+  );
 }

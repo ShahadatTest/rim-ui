@@ -70,6 +70,10 @@ conversation surface's list is complete:
 - Settings (`SettingsPage`) — `resetKeys={[]}`
 - Audit log (`AuditLogPage`) — `resetKeys={[]}`
 
+Inside panes, two boundaries keep a lazily loaded part's failure to that part: the Settings
+section content (`SettingsPage`, `resetKeys={[shownTab]}`, the section list stays usable) and the
+emoji picker (`EmojiPicker`, inside its popover).
+
 ## Adding a new surface
 
 1. Import `SurfaceErrorBoundary` from `src/shared/ui/SurfaceErrorBoundary`.

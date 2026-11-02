@@ -24,6 +24,9 @@ deployment runs the web client at `RIM_WEB_VERSION`, apart from the server's `RI
 
 ### Fixed
 
+- A member removed from a workspace that is not open is told "You are no longer a member of
+  <name>" and the workspace leaves the rail within a minute, or at once when they click it,
+  instead of showing "Failed to load conversations." until a reload.
 - While a dialog is open, such as Kick or Confirm: Run pipe, Ctrl+K and the other shortcuts do
   nothing, so no command runs behind it, and a confirmation that the command palette asks for
   closes the palette.

@@ -10,6 +10,7 @@ import { NotificationSettings } from "../../notifications/components/Notificatio
 import { MessageDisplaySettings } from "../../messages/components/MessageDisplaySettings";
 import { MacroSettings } from "../../macros/components/MacroSettings";
 import { PipelineSettings } from "../../pipelines/components/PipelineSettings";
+import { SurfaceErrorBoundary } from "../../../shared/ui/SurfaceErrorBoundary";
 import { lazyWithRetry } from "../../../shared/lazy/importWithRetry";
 import { agentAvailable } from "../../agent/agentAvailability";
 import { ProfileSettings } from "./ProfileSettings";
@@ -341,6 +342,7 @@ export function SettingsPage() {
     activeTab === "moderation" || visibleTabs.some((tab) => tab.key === activeTab)
       ? activeTab
       : "profile";
+  const sectionLabel = tabs.find((tab) => tab.key === shownTab)?.label ?? "Settings";
   // Groups with no visible tab are left out, label included.
   const visibleGroups = groups
     .map((group) => ({ group, items: visibleTabs.filter((tab) => tab.group === group) }))
@@ -425,60 +427,62 @@ export function SettingsPage() {
         {/* Tab content */}
         <div className="min-w-0 flex-1 overflow-y-auto">
           <div className="mx-auto max-w-3xl px-8 py-6">
-            <Suspense fallback={<SettingsLoadingSpinner />}>
-              {shownTab === "profile" && <ProfileSettings />}
-              {shownTab === "keybinds" && <KeybindSettings />}
-              {shownTab === "keyboard" && <KeyboardSettings />}
-              {shownTab === "commands" && <UserCommandSettings />}
-              {shownTab === "macros" && <MacroSettings />}
-              {shownTab === "pipelines" && <PipelineSettings />}
-              {shownTab === "plugins" && <PluginSettingsPage />}
-              {shownTab === "plugin-ai" && <PluginAiConsentPanel />}
-              {shownTab === "emoji" && <EmojiManagement serverId={workspaceId} />}
-              {shownTab === "state" && (
-                <WorkspaceStateSettings serverId={workspaceId ?? undefined} />
-              )}
-              {shownTab === "agent" && <AgentSettingsPanel />}
-              {shownTab === "messages" && <MessageDisplaySettings />}
-              {shownTab === "direct-messages" && <DmSettings />}
-              {shownTab === "notifications" && <NotificationSettings />}
-              {shownTab === "history" && <HistoryArchiveSettings />}
-              {shownTab === "workspace" && (
-                <div className="space-y-10">
-                  <WorkspaceNameSettings serverId={workspaceId} />
-                  <WorkspaceInvites serverId={workspaceId} />
-                  <PublicLinkSettings
-                    serverId={workspaceId}
-                    onOpenRequests={() => setActiveTab("workspace-moderation")}
+            <SurfaceErrorBoundary surface={sectionLabel} resetKeys={[shownTab]}>
+              <Suspense fallback={<SettingsLoadingSpinner />}>
+                {shownTab === "profile" && <ProfileSettings />}
+                {shownTab === "keybinds" && <KeybindSettings />}
+                {shownTab === "keyboard" && <KeyboardSettings />}
+                {shownTab === "commands" && <UserCommandSettings />}
+                {shownTab === "macros" && <MacroSettings />}
+                {shownTab === "pipelines" && <PipelineSettings />}
+                {shownTab === "plugins" && <PluginSettingsPage />}
+                {shownTab === "plugin-ai" && <PluginAiConsentPanel />}
+                {shownTab === "emoji" && <EmojiManagement serverId={workspaceId} />}
+                {shownTab === "state" && (
+                  <WorkspaceStateSettings serverId={workspaceId ?? undefined} />
+                )}
+                {shownTab === "agent" && <AgentSettingsPanel />}
+                {shownTab === "messages" && <MessageDisplaySettings />}
+                {shownTab === "direct-messages" && <DmSettings />}
+                {shownTab === "notifications" && <NotificationSettings />}
+                {shownTab === "history" && <HistoryArchiveSettings />}
+                {shownTab === "workspace" && (
+                  <div className="space-y-10">
+                    <WorkspaceNameSettings serverId={workspaceId} />
+                    <WorkspaceInvites serverId={workspaceId} />
+                    <PublicLinkSettings
+                      serverId={workspaceId}
+                      onOpenRequests={() => setActiveTab("workspace-moderation")}
+                    />
+                    <WorkspaceDmPolicySettings serverId={workspaceId} />
+                    <WorkspacePluginSettings serverId={workspaceId} />
+                    <WorkspaceOwnerSettings serverId={workspaceId} />
+                  </div>
+                )}
+                {shownTab === "security" && <KeyIdentitySettings />}
+                {shownTab === "contacts" && <ContactsSettings />}
+                {shownTab === "workspace-moderation" && workspaceId && (
+                  <ModerationSettings serverId={workspaceId} />
+                )}
+                {shownTab === "moderation" && (
+                  <InstanceModerationSettings
+                    onNavigateToWorkspaceModeration={
+                      canModerate && !inDirectSpace
+                        ? () => setActiveTab("workspace-moderation")
+                        : undefined
+                    }
                   />
-                  <WorkspaceDmPolicySettings serverId={workspaceId} />
-                  <WorkspacePluginSettings serverId={workspaceId} />
-                  <WorkspaceOwnerSettings serverId={workspaceId} />
-                </div>
-              )}
-              {shownTab === "security" && <KeyIdentitySettings />}
-              {shownTab === "contacts" && <ContactsSettings />}
-              {shownTab === "workspace-moderation" && workspaceId && (
-                <ModerationSettings serverId={workspaceId} />
-              )}
-              {shownTab === "moderation" && (
-                <InstanceModerationSettings
-                  onNavigateToWorkspaceModeration={
-                    canModerate && !inDirectSpace
-                      ? () => setActiveTab("workspace-moderation")
-                      : undefined
-                  }
-                />
-              )}
+                )}
 
-              {shownTab === "account" && (
-                <AccountSettings
-                  onNavigateToProfile={() => setActiveTab("profile")}
-                  onNavigateToWorkspace={() => setActiveTab("workspace")}
-                />
-              )}
-              {shownTab === "about" && <AboutRim />}
-            </Suspense>
+                {shownTab === "account" && (
+                  <AccountSettings
+                    onNavigateToProfile={() => setActiveTab("profile")}
+                    onNavigateToWorkspace={() => setActiveTab("workspace")}
+                  />
+                )}
+                {shownTab === "about" && <AboutRim />}
+              </Suspense>
+            </SurfaceErrorBoundary>
           </div>
         </div>
       </div>

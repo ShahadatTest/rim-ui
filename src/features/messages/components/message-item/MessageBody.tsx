@@ -4,6 +4,10 @@ import { activeBan } from "../../hooks/useBanExpiry";
 import { cn } from "../../../../shared/ui/cn";
 import { MarkdownRenderer } from "../../../../shared/ui/MarkdownRenderer";
 import { useMessageEmojiMap } from "../../../emoji/hooks/useMessageEmojiMap";
+import {
+  contextMenuOpen,
+  subscribeContextMenus,
+} from "../../../../shared/ui/contextMenu/useContextMenu";
 import { UserHoverCardPortal } from "../../../../shared/ui/UserHoverCardPortal";
 import { openDirectWithMember } from "../../../conversations/state/openDirect";
 import { useMessageDisplaySettingsStore } from "../../state/useMessageDisplaySettingsStore";
@@ -74,7 +78,8 @@ export const MessageText = memo(function MessageText({
   const handleMentionHover = useCallback((userId: string, rect: DOMRect) => {
     clearTimeout(mentionTimerRef.current);
     mentionTimerRef.current = setTimeout(() => {
-      setMentionCard({ userId, rect });
+      // No card opens while a context menu is open.
+      if (!contextMenuOpen()) setMentionCard({ userId, rect });
     }, 400);
   }, []);
 
@@ -90,6 +95,18 @@ export const MessageText = memo(function MessageText({
   }, []);
 
   useEffect(() => () => clearTimeout(mentionTimerRef.current), []);
+
+  // Opening a context menu hides the mention card.
+  useEffect(
+    () =>
+      subscribeContextMenus(() => {
+        if (contextMenuOpen()) {
+          clearTimeout(mentionTimerRef.current);
+          setMentionCard(null);
+        }
+      }),
+    [],
+  );
 
   const styles = TEXT_STYLES[variant];
   const EmptyTag = variant === "inline" ? "span" : "p";

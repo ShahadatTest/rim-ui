@@ -26,6 +26,8 @@ deployment runs the web client at `RIM_WEB_VERSION`, apart from the server's `RI
 
 - Right-clicking a person's name, avatar or @mention closes their hover card, so it no longer
   covers the person menu, and no hover card opens while a menu is open.
+- Moving through the composer's / suggestions with the arrow keys keeps the selected command in
+  view, and the suggestions' descriptions are left-aligned.
 
 ## [0.0.9] - 2026-10-31
 

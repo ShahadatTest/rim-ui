@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { queryOptions, useQuery } from "@tanstack/react-query";
 import { gql } from "graphql-request";
 
 import { graphqlClient } from "../../../core/graphql/client";
@@ -36,14 +36,18 @@ export async function fetchMyServers(): Promise<Server[]> {
   return res.myServers;
 }
 
-/** The workspaces this account is a member of; `enabled` false only reads what is cached. */
-export function useMyServers(enabled = true) {
-  return useQuery({
+/** The `myServers` query: the workspaces this account is a member of. */
+export function myServersQueryOptions() {
+  return queryOptions({
     queryKey: queryKeys.myServers(),
-    enabled,
     staleTime: 60_000,
     // Runs offline too: the desktop app answers from its saved copy (offlineSnapshot.ts).
     networkMode: "offlineFirst",
     queryFn: () => withOfflineSnapshot("servers", null, fetchMyServers),
   });
+}
+
+/** The workspaces this account is a member of; `enabled` false only reads what is cached. */
+export function useMyServers(enabled = true) {
+  return useQuery({ ...myServersQueryOptions(), enabled });
 }

@@ -65,6 +65,11 @@ export function expectDeparture(workspaceId: string): void {
   departing.add(workspaceId);
 }
 
+/** Whether this client is leaving or deleting `workspaceId`. */
+export function isDeparting(workspaceId: string): boolean {
+  return departing.has(workspaceId);
+}
+
 /** Unmarks a workspace whose leave or deletion failed. */
 export function forgetDeparture(workspaceId: string): void {
   departing.delete(workspaceId);

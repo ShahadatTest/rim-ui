@@ -41,6 +41,9 @@ vi.mock("../../features/conversations/api/useUnreadCounts", () => ({
 vi.mock("../../features/conversations/api/useAllWorkspaceUnreadCounts", () => ({
   useAllWorkspaceUnreadCounts: () => {},
 }));
+vi.mock("../../features/workspaces/hooks/useWorkspaceAccessWatch", () => ({
+  useWorkspaceAccessWatch: () => {},
+}));
 vi.mock("../../features/conversations/api/useMutedConversations", () => ({
   useMutedConversations: () => {},
 }));

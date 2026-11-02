@@ -22,6 +22,12 @@ deployment runs the web client at `RIM_WEB_VERSION`, apart from the server's `RI
 
 ## [Unreleased]
 
+### Fixed
+
+- A member removed from a workspace that is not open is told "You are no longer a member of
+  <name>" and the workspace leaves the rail within a minute, or at once when they click it,
+  instead of showing "Failed to load conversations." until a reload.
+
 ## [0.0.9] - 2026-10-31
 
 ### Added

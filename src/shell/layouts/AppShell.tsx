@@ -27,6 +27,7 @@ import { ConfirmCommandModal } from "../../features/agent/components/ConfirmComm
 import { useBlockedConversationsRuntime } from "../../features/relay/runtime/useBlockedConversationsRuntime";
 import { useUnreadCounts } from "../../features/conversations/api/useUnreadCounts";
 import { useAllWorkspaceUnreadCounts } from "../../features/conversations/api/useAllWorkspaceUnreadCounts";
+import { useWorkspaceAccessWatch } from "../../features/workspaces/hooks/useWorkspaceAccessWatch";
 import { useMutedConversations } from "../../features/conversations/api/useMutedConversations";
 import { useWorkspacePresence } from "../../features/presence/api/useWorkspacePresence";
 import { useMessageCacheSync } from "../../features/messages/runtime/messageCacheSync";
@@ -210,6 +211,7 @@ function WorkspaceShell() {
   useE2eeRuntime(workspaceId);
   useUnreadCounts(workspaceId ?? undefined);
   useAllWorkspaceUnreadCounts(workspaceId);
+  useWorkspaceAccessWatch();
   useMutedConversations(workspaceId ?? undefined);
   useWorkspacePresence(workspaceId);
   const selfId = useAuthStore((s) => s.session?.userId ?? null);

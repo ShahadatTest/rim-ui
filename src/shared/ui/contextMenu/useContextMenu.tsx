@@ -79,6 +79,25 @@ export function isContextMenuKey(event: { key: string; shiftKey: boolean }): boo
 
 /** The context menu open anywhere in the app, so that opening one closes the other. */
 let active: { owner: object; close: () => void } | null = null;
+const activeListeners = new Set<() => void>();
+
+function setActive(next: typeof active) {
+  active = next;
+  for (const listener of [...activeListeners]) listener();
+}
+
+/** Whether a context menu of the app is open. */
+export function contextMenuOpen(): boolean {
+  return active !== null;
+}
+
+/** Calls `listener` when a context menu opens or closes; returns the function that stops it. */
+export function subscribeContextMenus(listener: () => void): () => void {
+  activeListeners.add(listener);
+  return () => {
+    activeListeners.delete(listener);
+  };
+}
 
 /**
  * Touches a bound element already took, so that a target inside another bound element starts
@@ -132,7 +151,7 @@ export function useContextMenu(): ContextMenuController {
   const pressRef = useRef<Press | null>(null);
 
   const close = useCallback(() => {
-    if (active?.owner === owner) active = null;
+    if (active?.owner === owner) setActive(null);
     setOpen(null);
   }, [owner]);
 
@@ -143,7 +162,7 @@ export function useContextMenu(): ContextMenuController {
       options?: ContextMenuOptions,
     ) => {
       if (active && active.owner !== owner) active.close();
-      active = { owner, close };
+      setActive({ owner, close });
       serialRef.current += 1;
       setOpen({ serial: serialRef.current, items, position, label: options?.label });
     },
@@ -152,7 +171,7 @@ export function useContextMenu(): ContextMenuController {
 
   useEffect(
     () => () => {
-      if (active?.owner === owner) active = null;
+      if (active?.owner === owner) setActive(null);
       if (pressRef.current) clearTimeout(pressRef.current.timer);
     },
     [owner],

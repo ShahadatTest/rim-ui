@@ -22,6 +22,11 @@ deployment runs the web client at `RIM_WEB_VERSION`, apart from the server's `RI
 
 ## [Unreleased]
 
+### Fixed
+
+- Right-clicking a person's name, avatar or @mention closes their hover card, so it no longer
+  covers the person menu, and no hover card opens while a menu is open.
+
 ## [0.0.9] - 2026-10-31
 
 ### Added

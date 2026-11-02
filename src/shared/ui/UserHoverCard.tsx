@@ -5,6 +5,7 @@ import type { AuthorBan } from "../utils/banStatus";
 import type { PresenceStatus } from "./Avatar";
 import type { HandleView } from "../utils/handles";
 import { UserCardContent } from "./UserCardContent";
+import { contextMenuOpen, subscribeContextMenus } from "./contextMenu/useContextMenu";
 import { Z } from "./zIndex";
 
 interface UserHoverCardProps {
@@ -69,6 +70,18 @@ export function UserHoverCard({
 
   useEffect(() => clearTimers, [clearTimers]);
 
+  // Opening a context menu hides the card.
+  useEffect(
+    () =>
+      subscribeContextMenus(() => {
+        if (contextMenuOpen()) {
+          clearTimers();
+          setVisible(false);
+        }
+      }),
+    [clearTimers],
+  );
+
   const computePosition = useCallback(() => {
     const el = triggerRef.current;
     if (!el) return;
@@ -87,6 +100,8 @@ export function UserHoverCard({
   const show = useCallback(() => {
     clearTimers();
     showTimerRef.current = setTimeout(() => {
+      // No card opens while a context menu is open.
+      if (contextMenuOpen()) return;
       computePosition();
       setVisible(true);
     }, 400);

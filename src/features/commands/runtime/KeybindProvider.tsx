@@ -26,6 +26,7 @@ import { presentReadResult } from "./readCommandResult";
 import { useSearchOverlayStore } from "../../messages/state/useSearchOverlayStore";
 import { useAgentStore } from "../../agent/state/useAgentStore";
 import { isTextEntry } from "../../../shared/ui/focusNavigation";
+import { hostDialogOpen } from "../../../shared/ui/hostDialogs";
 import { useEffectiveKeybinds } from "./effectiveKeybinds";
 import { LOCAL_COMMANDS } from "./localCommands";
 import { installVimLayer } from "./vimLayer";
@@ -81,6 +82,8 @@ export function KeybindProvider({ children }: KeybindProviderProps) {
   const handleKeyDownRef = useRef<(event: KeyboardEvent) => void>(() => {});
   handleKeyDownRef.current = (event: KeyboardEvent) => {
     if (isKeystrokeRecorder(event.target)) return;
+    // A host dialog owns the keyboard: no keybind runs, the palette's included, until it closes.
+    if (hostDialogOpen()) return;
     const isTextInput = isTextEntry(event.target as Element);
 
     const keystroke = parseKeystroke(event);

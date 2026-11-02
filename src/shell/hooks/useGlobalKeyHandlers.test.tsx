@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { render } from "@testing-library/react";
 
 import { useKeybindProfileStore } from "../../features/commands/state/useKeybindProfileStore";
+import { trackOpenDialog } from "../../shared/ui/hostDialogs";
 import { useShellStore } from "../state/useShellStore";
 import { useGlobalKeyHandlers } from "./useGlobalKeyHandlers";
 
@@ -31,5 +32,36 @@ describe("useGlobalKeyHandlers", () => {
     const { getByRole } = render(<Harness />);
     typeOutsideAField("x");
     expect(getByRole("textbox")).not.toHaveFocus();
+  });
+
+  it("leaves a typed key alone while a host dialog is open", () => {
+    const { getByRole } = render(
+      <>
+        <Harness />
+        <button>Cancel</button>
+      </>,
+    );
+    const button = getByRole("button", { name: "Cancel" });
+    button.focus();
+    const release = trackOpenDialog();
+    try {
+      button.dispatchEvent(new KeyboardEvent("keydown", { key: "a", bubbles: true }));
+      expect(getByRole("textbox")).not.toHaveFocus();
+      expect(button).toHaveFocus();
+    } finally {
+      release();
+    }
+  });
+
+  it("leaves zen mode on when Escape belongs to a host dialog", () => {
+    useShellStore.setState({ zenMode: true });
+    render(<Harness />);
+    const release = trackOpenDialog();
+    try {
+      typeOutsideAField("Escape");
+      expect(useShellStore.getState().zenMode).toBe(true);
+    } finally {
+      release();
+    }
   });
 });

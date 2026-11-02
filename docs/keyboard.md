@@ -24,7 +24,9 @@ other keydown passes through, in order:
 3. **The focused surface**: lists answer arrow keys, Home and End; dialogs close on Escape;
    menus move with the arrows, Home and End, open a submenu with ArrowRight or Enter and close
    it with ArrowLeft or Escape. The ContextMenu key or Shift+F10 opens the context menu of the
-   focused item, as a right click does (`ui-shell.md`, Context Menus).
+   focused item, as a right click does (`ui-shell.md`, Context Menus). While a dialog is open,
+   a confirmation included, no keybind runs and typed keys do not go to the composer; a dialog
+   that opens over the command palette closes the palette.
 
 The keyboard shortcuts panel (`?` or `Ctrl+/`, or Settings, Keyboard) lists the bindings this
 resolution produces, so it always matches what the keys do.

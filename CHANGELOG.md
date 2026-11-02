@@ -24,6 +24,9 @@ deployment runs the web client at `RIM_WEB_VERSION`, apart from the server's `RI
 
 ### Fixed
 
+- While a dialog is open, such as Kick or Confirm: Run pipe, Ctrl+K and the other shortcuts do
+  nothing, so no command runs behind it, and a confirmation that the command palette asks for
+  closes the palette.
 - Notifications of a group without a name are titled with its members' names, as in the sidebar,
   instead of "Someone and Someone".
 - When part of the app cannot be downloaded (offline, or after the server's web app was updated),

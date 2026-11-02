@@ -4,6 +4,7 @@ import { Bot, ShieldAlert, X } from "lucide-react";
 import { CommandSensitivity } from "../../../core/graphql/generated/schema-types";
 import { confirmShortcutLabel } from "../../../core/runtime/runtime";
 import { cn } from "../../../shared/ui/cn";
+import { trackOpenDialog } from "../../../shared/ui/hostDialogs";
 import { Z } from "../../../shared/ui/zIndex";
 import { useShellStore } from "../../../shell/state/useShellStore";
 import {
@@ -160,6 +161,9 @@ function ConfirmCommandModalContent({ request, onApprove, onReject }: ContainerP
       previousFocusRef.current = null;
     };
   }, []);
+
+  // Counted as a host dialog: plugin frames go inert and keybinds wait while it is open.
+  useEffect(() => trackOpenDialog(), []);
 
   // Initial focus → the header's close button, which cancels. Defer one
   // frame so the panel is in the DOM.

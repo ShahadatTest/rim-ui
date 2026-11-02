@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useMemo } from "react";
+import { useState, useRef, useCallback, useMemo, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { Send, SmilePlus, Paperclip, Loader2 } from "lucide-react";
 
@@ -136,6 +136,13 @@ export function ComposerInput({
   const [selectedSlashIndex, setSelectedSlashIndex] = useState(0);
   const [mentionSuggestions, setMentionSuggestions] = useState<MentionSuggestion[]>([]);
   const [selectedMention, setSelectedMention] = useState(0);
+
+  // The selected `/` suggestion stays in view as the arrow keys move it.
+  useEffect(() => {
+    commandListRef.current
+      ?.querySelector<HTMLElement>('[role="option"][aria-selected="true"]')
+      ?.scrollIntoView({ block: "nearest" });
+  }, [selectedSlashIndex, slashItems]);
 
   // Extract the current `:` emoji query being typed (word touching cursor), without the colon
   const getPartialShortcode = useCallback((value: string, cursorPos: number): string | null => {
@@ -553,7 +560,7 @@ export function ComposerInput({
                   aria-selected={isSelected}
                   onClick={() => applySlashSuggestion(item.value)}
                   className={cn(
-                    "flex w-full flex-col gap-0.5 px-3 py-1.5",
+                    "flex w-full flex-col gap-0.5 px-3 py-1.5 text-left",
                     isSelected ? "bg-rim-accent/10" : "hover:bg-rim-void/50",
                   )}
                 >
@@ -578,7 +585,7 @@ export function ComposerInput({
                     aria-selected={isSelected}
                     onClick={() => applyCommandSuggestion(item.value)}
                     className={cn(
-                      "flex w-full flex-col gap-0.5 px-3 py-1.5",
+                      "flex w-full flex-col gap-0.5 px-3 py-1.5 text-left",
                       isSelected ? "bg-rim-accent/10" : "hover:bg-rim-void/50",
                     )}
                   >

@@ -22,6 +22,12 @@ deployment runs the web client at `RIM_WEB_VERSION`, apart from the server's `RI
 
 ## [Unreleased]
 
+### Fixed
+
+- When part of the app cannot be downloaded (offline, or after the server's web app was updated),
+  only the emoji picker or the Settings section that needed it says so, with Reload; the
+  conversation, the composer and the list of Settings sections stay usable.
+
 ## [0.0.9] - 2026-10-31
 
 ### Added
